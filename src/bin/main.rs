@@ -8,10 +8,11 @@ use std::error::Error;
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
     let config: Config = Config::new()?;
+    let warehouse_id_sample: &str = "abcdefg123456789";
 
     let request_body: SqlStatementRequest = SqlStatementRequest {
         statement: "SELECT * FROM range(10)".to_string(),
-        warehouse_id: "b57b0114ac8d68c4".to_string(),
+        warehouse_id: warehouse_id_sample.to_string(),
         catalog: None,
         schema: None,
         parameters: None,
