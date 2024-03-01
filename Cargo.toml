@@ -7,7 +7,7 @@ description = "Rust-based interface for seamless integration with the Databricks
 license = "MIT"
 readme = "README.md"
 repository = "https://github.com/joezug/rustbricks"
-keywords = ["databricks", "rest", "api", "interface", "rust", "wrapper", "client"]
+keywords = ["databricks", "rest", "api", "interface", "wrapper"]
 
 [dependencies]
 chrono = { version = "0.4.34", features = ["serde"] }
