@@ -1,80 +1,64 @@
 # Rustbricks
 
-This Rust client facilitates interaction with Databricks clusters, offering a suite of functions to manage clusters and execute SQL statements seamlessly.
+Rustbricks provides a Rust-based interface for seamless integration with the Databricks REST API, enabling Rust applications to interact with Databricks services efficiently. It simplifies executing SQL statements, managing clusters, and processing Databricks' responses.
 
 ## Features
 
-- **Cluster Management**: Obtain detailed cluster information, including status, configuration, and statistics.
-- **SQL Execution**: Execute SQL statements directly on your Databricks clusters and retrieve the results.
-- **Robust Error Handling**: Custom error types for clear, concise error management across the client.
+- **SQL Execution**: Directly execute SQL statements from Rust.
+- **Cluster Management**: Retrieve and manage Databricks cluster information.
+- **Simplified Requests**: Streamline the creation and handling of Databricks requests and responses.
 
-## Project Structure
+## Installation
 
-The client is modular, with distinct responsibilities separated into various modules for ease of navigation and maintenance:
+To use Rustbricks, add it as a dependency in your `Cargo.toml`:
 
-- **`models`**: Defines data structures for API requests and responses, including `SqlStatementRequest` and `ClusterInfo`.
-- **`services`**: Core functionality for interacting with the Databricks API, such as `get_cluster_info`, `execute_sql_statement`, and `get_sql_statement_status`.
-- **`utils`**: Utility functions and structures supporting the broader application logic.
-- **`errors`**: Custom error types for nuanced error handling throughout the client's operations.
-
-## Getting Started
-
-### Prerequisites
-
-Ensure you have the following environment variables configured:
-
-- `DATABRICKS_HOST`: Your Databricks instance host URL.
-- `DATABRICKS_TOKEN`: Your Databricks API token.
-
-These can be set directly in your shell environment or managed via a `.env` file with the help of the [dotenv](https://github.com/dotenv-rs/dotenv) crate.
-
-### Setup
-
-Clone the repository and navigate into the project directory:
-
-```sh
-git clone <repository-url>
-cd <project-directory>
+```toml
+[dependencies]
+rustbricks = "0.0.1"
 ```
 
-### Building the Project
+## Quick Start
 
-Build the project using Cargo, Rust's package manager:
+Here's a quick example to execute a SQL statement using Rustbricks:
 
-```sh
-cargo build
+```rust
+use rustbricks::config::Config;
+use rustbricks::models::SqlStatementRequest;
+use rustbricks::services::execute_sql_statement;
+use std::error::Error;
+
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn Error>> {
+    let config = Config::new()?;
+
+    let request_body = SqlStatementRequest {
+        statement: "SELECT * FROM range(10)".to_string(),
+        warehouse_id: "b57b0114ac8d68c4".to_string(),
+        // Optional configurations can be omitted for brevity
+        catalog: None, schema: None, parameters: None,
+        row_limit: None, byte_limit: None,
+        disposition: "INLINE".to_string(),
+        format: "JSON_ARRAY".to_string(),
+        wait_timeout: Some("10s".to_string()),
+        on_wait_timeout: Some("CONTINUE".to_string()),
+    };
+
+    let response = execute_sql_statement(
+        &config.databricks_host,
+        &config.databricks_token,
+        request_body,
+    ).await?;
+
+    println!("{:#?}", response);
+
+    Ok(())
+}
 ```
 
-This compiles the project and its dependencies.
+## Documentation
 
-### Running the Client
+For detailed documentation, including all available functions and their usage, please refer to the Rustbricks documentation on docs.rs.
 
-To execute the client:
+## License
 
-```sh
-cargo run
-```
-
-### Testing
-
-Run the suite of automated tests to ensure everything is functioning as expected:
-
-```sh
-cargo test
-```
-
-## Dependencies
-
-This client leverages several external crates to enhance its functionality:
-
-- **`chrono`**: Date and time operations.
-- **`reqwest`**: HTTP requests.
-- **`serde`**: Data serialization and deserialization.
-- **`tokio`**: Asynchronous runtime.
-- **`actix-*` crates**: Web application framework.
-
-For a complete list of dependencies, refer to the `Cargo.toml` file.
-
-## Examples
-
-The `examples` directory contains sample scripts demonstrating how to use the client effectively. For example, `execute_sql_statement.rs` illustrates executing a SQL statement on a Databricks cluster.
+Rustbricks is available under the MIT license. See the [LICENSE](https://github.com/joezug/rustbricks/blob/main/LICENSE) file for more info.
