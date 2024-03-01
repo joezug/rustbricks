@@ -14,7 +14,7 @@ To use Rustbricks, add it as a dependency in your `Cargo.toml`:
 
 ```toml
 [dependencies]
-rustbricks = "0.0.1"
+rustbricks = "0.0.3"
 ```
 
 ## Quick Start
@@ -30,13 +30,16 @@ use std::error::Error;
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
     let config = Config::new()?;
+    let warehouse_id_sample: &str = "abcdefg123456789";
 
-    let request_body = SqlStatementRequest {
+    let request_body: SqlStatementRequest = SqlStatementRequest {
         statement: "SELECT * FROM range(10)".to_string(),
-        warehouse_id: "b57b0114ac8d68c4".to_string(),
-        // Optional configurations can be omitted for brevity
-        catalog: None, schema: None, parameters: None,
-        row_limit: None, byte_limit: None,
+        warehouse_id: warehouse_id_sample.to_string(),
+        catalog: None,
+        schema: None,
+        parameters: None,
+        row_limit: None,
+        byte_limit: None,
         disposition: "INLINE".to_string(),
         format: "JSON_ARRAY".to_string(),
         wait_timeout: Some("10s".to_string()),
