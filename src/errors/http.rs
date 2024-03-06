@@ -16,6 +16,7 @@ pub enum HttpError {
     RequestLimitExceeded(String),
     InternalServerError(String),
     TemporarilyUnavailable(String),
+    InternalError(Box<dyn std::error::Error>),
 }
 
 impl HttpError {
@@ -43,6 +44,17 @@ impl fmt::Display for HttpError {
             | HttpError::RequestLimitExceeded(message)
             | HttpError::InternalServerError(message)
             | HttpError::TemporarilyUnavailable(message) => write!(f, "{}", message),
+            HttpError::InternalError(message) => write!(f, "{}", message),
+        }
+    }
+}
+
+impl std::error::Error for HttpError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            // Handle other variants accordingly...
+            HttpError::InternalError(e) => Some(e.as_ref()),
+            _ => None,
         }
     }
 }

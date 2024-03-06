@@ -1,12 +1,12 @@
 # Rustbricks
 
-Rustbricks provides a Rust-based interface for seamless integration with the Databricks REST API, enabling Rust applications to interact with Databricks services efficiently. It simplifies executing SQL statements, managing clusters, and processing Databricks' responses.
+Rustbricks offers a Rust-based framework designed for efficient integration with the Databricks REST API, enabling Rust applications to effortlessly interact with Databricks services. This library facilitates executing SQL statements, managing clusters, and simplifying the request-response cycle with Databricks.
 
 ## Features
 
-- **SQL Execution**: Directly execute SQL statements from Rust.
-- **Cluster Management**: Retrieve and manage Databricks cluster information.
-- **Simplified Requests**: Streamline the creation and handling of Databricks requests and responses.
+- **SQL Execution**: Execute SQL statements directly from Rust.
+- **Cluster Management**: Access and manage Databricks cluster information.
+- **Persistent Connections**: Utilize a session-based approach to manage persistent connections for improved performance.
 
 ## Installation
 
@@ -14,27 +14,33 @@ To use Rustbricks, add it as a dependency in your `Cargo.toml`:
 
 ```toml
 [dependencies]
-rustbricks = "0.0.3"
+rustbricks = "0.1.0" # Update to the latest version
 ```
 
 ## Quick Start
 
-Here's a quick example to execute a SQL statement using Rustbricks:
+The following example demonstrates how to execute a SQL statement using Rustbricks with the new `DatabricksSession`:
 
 ```rust
-use rustbricks::config::Config;
-use rustbricks::models::SqlStatementRequest;
-use rustbricks::services::execute_sql_statement;
+use rustbricks::{
+    config::Config,
+    models::{SqlStatementRequest, SqlStatementResponse},
+    services::DatabricksSession,
+};
 use std::error::Error;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
+    // Initialize the configuration
     let config = Config::new()?;
-    let warehouse_id_sample: &str = "abcdefg123456789";
+    
+    // Create a new session with the configuration
+    let session = DatabricksSession::new(config)?;
 
-    let request_body: SqlStatementRequest = SqlStatementRequest {
+    // Define a SQL statement request
+    let request_body = SqlStatementRequest {
         statement: "SELECT * FROM range(10)".to_string(),
-        warehouse_id: warehouse_id_sample.to_string(),
+        warehouse_id: "abcdefg123456789".to_string(),
         catalog: None,
         schema: None,
         parameters: None,
@@ -46,12 +52,10 @@ async fn main() -> Result<(), Box<dyn Error>> {
         on_wait_timeout: Some("CONTINUE".to_string()),
     };
 
-    let response = execute_sql_statement(
-        &config.databricks_host,
-        &config.databricks_token,
-        request_body,
-    ).await?;
+    // Execute the SQL statement using the session
+    let response = session.execute_sql_statement(request_body).await?;
 
+    // Print the response
     println!("{:#?}", response);
 
     Ok(())

@@ -11,15 +11,9 @@ pub mod models {
 }
 
 pub mod services {
-    mod cluster_service;
-    mod databricks_request;
-    mod sql_service;
+    pub mod databricks_session;
 
-    pub use cluster_service::get_cluster_info;
-    pub use databricks_request::send_databricks_request;
-    pub use sql_service::{
-        execute_sql_statement, get_sql_statement_result_chunk, get_sql_statement_status,
-    };
+    pub use databricks_session::DatabricksSession;
 }
 
 pub mod errors {

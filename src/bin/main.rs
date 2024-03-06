@@ -1,13 +1,17 @@
 extern crate rustbricks;
 
-use rustbricks::config::Config;
-use rustbricks::models::{SqlStatementRequest, SqlStatementResponse};
-use rustbricks::services::execute_sql_statement;
+use rustbricks::{
+    config::Config,
+    models::{SqlStatementRequest, SqlStatementResponse},
+    services::DatabricksSession,
+};
 use std::error::Error;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
     let config: Config = Config::new()?;
+    let session: DatabricksSession = DatabricksSession::new(config)?;
+
     let warehouse_id_sample: &str = "abcdefg123456789";
 
     let request_body: SqlStatementRequest = SqlStatementRequest {
@@ -24,13 +28,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
         on_wait_timeout: Some("CONTINUE".to_string()),
     };
 
-    let response: SqlStatementResponse = execute_sql_statement(
-        &config.databricks_host,
-        &config.databricks_token,
-        request_body,
-    )
-    .await
-    .unwrap();
+    let response: SqlStatementResponse = session.execute_sql_statement(request_body).await?;
 
     println!("{:#?}", response);
 

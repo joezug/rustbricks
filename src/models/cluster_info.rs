@@ -1,6 +1,8 @@
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-use std::fmt;
+use std::{
+    collections::HashMap,
+    fmt,
+};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ClusterInfo {

@@ -1,6 +1,6 @@
 [package]
 name = "rustbricks"
-version = "0.0.3"
+version = "0.1.0"
 edition = "2021"
 authors = ["Seó Ó Conchúbhair <seo.oconchubhair@gmail.com>"]
 description = "Rust-based interface for seamless integration with the Databricks REST API."
