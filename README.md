@@ -14,7 +14,7 @@ To use Rustbricks, add it as a dependency in your `Cargo.toml`:
 
 ```toml
 [dependencies]
-rustbricks = "0.1.0" # Update to the latest version
+rustbricks = "0.1.1"
 ```
 
 ## Quick Start

@@ -1,11 +1,11 @@
 use crate::{
     config::Config,
     errors::{ErrorResponse, HttpError},
-    models::{ResultData, SqlStatementRequest, SqlStatementResponse, ClusterInfo},
+    models::{ClusterInfo, ResultData, SqlStatementRequest, SqlStatementResponse},
 };
 use reqwest::{
     header::{HeaderMap, AUTHORIZATION},
-    Client, Method, StatusCode
+    Client, Method, StatusCode,
 };
 use serde::{de::DeserializeOwned, Serialize};
 use std::sync::Arc;
@@ -20,9 +20,24 @@ impl DatabricksSession {
         Self::with_active_pools(12, config)
     }
 
-    pub fn with_active_pools(pool_max_idle_per_host: usize, config: Config) -> Result<Self, reqwest::Error> {
+    pub fn with_active_pools(
+        pool_max_idle_per_host: usize,
+        config: Config,
+    ) -> Result<Self, reqwest::Error> {
         let client: Client = Client::builder()
             .pool_max_idle_per_host(pool_max_idle_per_host)
+            .build()?;
+
+        Ok(DatabricksSession {
+            client: Arc::new(client),
+            config,
+        })
+    }
+
+    pub fn with_unverified_ssl(config: Config) -> Result<Self, reqwest::Error> {
+        let client: Client = Client::builder()
+            .pool_max_idle_per_host(12)
+            .danger_accept_invalid_certs(true)
             .build()?;
 
         Ok(DatabricksSession {
@@ -67,10 +82,7 @@ impl DatabricksSession {
         .await
     }
 
-    pub async fn get_cluster_info(
-        &self,
-        cluster_id: &str,
-    ) -> Result<ClusterInfo, HttpError> {
+    pub async fn get_cluster_info(&self, cluster_id: &str) -> Result<ClusterInfo, HttpError> {
         self.send_databricks_request(
             Method::GET,
             &format!("api/2.0/clusters/get?cluster_id={}", cluster_id),
