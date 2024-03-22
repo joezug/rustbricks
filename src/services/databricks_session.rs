@@ -19,10 +19,34 @@ pub struct DatabricksSession {
 }
 
 impl DatabricksSession {
+    /// Creates a new `DatabricksSession` with the specified configuration.
+    ///
+    /// This constructor uses the default setting for the maximum number of idle connections
+    /// per host (12). It initializes the HTTP client used for communicating with the Databricks API.
+    ///
+    /// Parameters:
+    /// - `config`: A `Config` struct containing the necessary configuration, such as the Databricks
+    ///   instance host URL and the authentication token.
+    ///
+    /// Returns:
+    /// - A `Result` containing the new `DatabricksSession` if successful, or a `reqwest::Error` if
+    ///   the HTTP client could not be initialized.
     pub fn new(config: Config) -> Result<Self, reqwest::Error> {
         Self::with_active_pools(12, config)
     }
 
+    /// Creates a new `DatabricksSession` with the specified configuration and a custom setting for
+    /// the maximum number of idle connections per host.
+    ///
+    /// This allows more control over the resource utilization of the HTTP client when making
+    /// requests to the Databricks API.
+    ///
+    /// Parameters:
+    /// - `pool_max_idle_per_host`: The maximum number of idle connections to maintain per host.
+    /// - `config`: A `Config` struct as described in `new`.
+    ///
+    /// Returns:
+    /// - Same as `new`.
     pub fn with_active_pools(
         pool_max_idle_per_host: usize,
         config: Config,
@@ -37,6 +61,16 @@ impl DatabricksSession {
         })
     }
 
+    /// Creates a new `DatabricksSession` that ignores SSL certificate verification errors.
+    ///
+    /// This is useful for development environments or cases where self-signed certificates are used,
+    /// but should be used with caution due to the security implications.
+    ///
+    /// Parameters:
+    /// - `config`: A `Config` struct as described in `new`.
+    ///
+    /// Returns:
+    /// - Same as `new`, but with SSL certificate verification disabled.
     pub fn with_unverified_ssl(config: Config) -> Result<Self, reqwest::Error> {
         let client: Client = Client::builder()
             .pool_max_idle_per_host(12)
@@ -49,6 +83,16 @@ impl DatabricksSession {
         })
     }
 
+    /// Executes a SQL statement on Databricks and returns the response.
+    ///
+    /// This method submits a SQL statement for execution and provides the initial response,
+    /// which includes details such as the statement ID for subsequent status checks or result retrieval.
+    ///
+    /// Parameters:
+    /// - `request_body`: A `SqlStatementRequest` struct containing the SQL statement to be executed.
+    ///
+    /// Returns:
+    /// - A `Result` containing the `SqlStatementResponse` if successful, or an `HttpError` if the request fails.
     pub async fn execute_sql_statement(
         &self,
         request_body: SqlStatementRequest,
@@ -57,6 +101,16 @@ impl DatabricksSession {
             .await
     }
 
+    /// Retrieves the status of a previously executed SQL statement.
+    ///
+    /// This method polls the status of a SQL statement execution by its statement ID, allowing clients
+    /// to check if the execution has completed and if the results are ready to be fetched.
+    ///
+    /// Parameters:
+    /// - `statement_id`: The ID of the SQL statement execution to check.
+    ///
+    /// Returns:
+    /// - Same as `execute_sql_statement`.
     pub async fn get_sql_statement_status(
         &self,
         statement_id: &str,
@@ -69,6 +123,16 @@ impl DatabricksSession {
         .await
     }
 
+    /// Fetches a chunk of the result set from a previously executed SQL statement.
+    ///
+    /// This method retrieves a specific chunk of the results for a SQL statement execution, identified
+    /// by the statement ID and the chunk index.
+    ///
+    /// Parameters:
+    /// - `statement_id`: The ID of the SQL statement execution.
+    /// - `chunk_index`: The index of the result chunk to retrieve.
+    /// Returns:
+    /// - A `Result` containing the `ResultData` for the specified chunk, or an `HttpError` if the request fails.
     pub async fn get_sql_statement_result_chunk(
         &self,
         statement_id: &str,
@@ -85,6 +149,15 @@ impl DatabricksSession {
         .await
     }
 
+    /// Retrieves information about a specific cluster.
+    ///
+    /// This method fetches detailed information about a Databricks cluster, identified by the cluster ID.
+    ///
+    /// Parameters:
+    /// - `cluster_id`: The ID of the cluster to retrieve information for.
+    ///
+    /// Returns:
+    /// - A `Result` containing the `ClusterInfo` if successful, or an `HttpError` if the request fails.
     pub async fn get_cluster_info(&self, cluster_id: &str) -> Result<ClusterInfo, HttpError> {
         self.send_databricks_request(
             Method::GET,
@@ -94,6 +167,19 @@ impl DatabricksSession {
         .await
     }
 
+    /// A generic method for sending requests to the Databricks API.
+    ///
+    /// This internal method is a utility function used by other methods to send HTTP requests to the
+    /// Databricks API. It handles constructing the request, setting headers, serializing the request body,
+    /// and deserializing the response.
+    ///
+    /// Parameters:
+    /// - `method`: The HTTP method to use for the request.
+    /// - `endpoint`: The API endpoint to send the request to.
+    /// - `body`: An optional request body to serialize and include with the request.
+    ///
+    /// Returns:
+    /// - A `Result` containing the deserialized response body if successful, or an `HttpError` if the request fails.
     async fn send_databricks_request<T: DeserializeOwned, B: Serialize>(
         &self,
         method: Method,
@@ -130,6 +216,17 @@ impl DatabricksSession {
         self.handle_response(response).await
     }
 
+    /// Handles the HTTP response, deserializing the JSON body or converting errors.
+    ///
+    /// This internal method processes the HTTP response from the Databricks API, attempting to deserialize
+    /// the response body into the expected type or converting HTTP errors into `HttpError` instances.
+    ///
+    /// Parameters:
+    /// - `response`: The `reqwest::Response` object to process.
+    ///
+    /// Returns:
+    /// - A `Result` containing the deserialized response body if the request was successful, or an `HttpError`
+    ///   if there was an error with the request or response processing.
     async fn handle_response<T: DeserializeOwned>(
         &self,
         response: reqwest::Response,
@@ -171,35 +268,6 @@ impl DatabricksSession {
     /// - A `Result<JobRunResponse, HttpError>`: On success, returns a `JobRunResponse` struct
     ///   containing details about the triggered job run, including the `run_id`. On failure,
     ///   returns an `HttpError` indicating what went wrong during the request.
-    ///
-    /// Example:
-    /// ```no_run
-    /// use tokio::runtime::Runtime;
-    ///
-    /// async fn example_execute_job_run() {
-    ///     let rt = Runtime::new().unwrap();
-    ///
-    ///     rt.block_on(async {
-    ///         let config = Config::new().unwrap();
-    ///         let session = DatabricksSession::new(config).unwrap();
-    ///
-    ///         let request_body = JobRunRequest {
-    ///             job_id: YOUR_JOB_ID_HERE, // Replace YOUR_JOB_ID_HERE with the actual job ID
-    ///             idempotency_token: None, // Optional: Provide a token for idempotent requests
-    ///             // Other fields can be specified as needed
-    ///             ..Default::default() // Use default values for unspecified fields
-    ///         };
-    ///
-    ///         match session.execute_job_run(request_body).await {
-    ///             Ok(response) => println!("Job Run ID: {}", response.run_id),
-    ///             Err(e) => eprintln!("Failed to execute job run: {:?}", e),
-    ///         }
-    ///     });
-    /// }
-    /// ```
-    ///
-    /// Note: This function requires an async runtime to be executed, such as Tokio's runtime
-    /// shown in the example. It is designed to be called within an async context or block.
     pub async fn execute_job_run(
         &self,
         request_body: JobRunRequest,
