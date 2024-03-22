@@ -1,5 +1,5 @@
 use chrono::{DateTime, Utc};
-use serde::{self, Deserialize, Deserializer, Serialize};
+use serde::{Deserialize, Deserializer, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct SqlStatementRequest {

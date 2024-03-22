@@ -1,7 +1,10 @@
 use crate::{
     config::Config,
     errors::{ErrorResponse, HttpError},
-    models::{ClusterInfo, ResultData, SqlStatementRequest, SqlStatementResponse},
+    models::{
+        ClusterInfo, JobRunRequest, JobRunResponse, ResultData, SqlStatementRequest,
+        SqlStatementResponse,
+    },
 };
 use reqwest::{
     header::{HeaderMap, AUTHORIZATION},
@@ -149,5 +152,59 @@ impl DatabricksSession {
                 Err(HttpError::from_error_response(error))
             }
         }
+    }
+
+    /// Executes a job run on Databricks using the specified job configuration.
+    ///
+    /// This asynchronous method sends a request to the Databricks API to trigger
+    /// a job run based on the provided job configuration. The method constructs a POST
+    /// request to the `/api/2.1/jobs/run-now` endpoint with a `JobRunRequest` body,
+    /// which includes various optional parameters to customize the job run.
+    ///
+    /// Parameters:
+    /// - `request_body`: A `JobRunRequest` struct representing the configuration for the job run.
+    ///   This includes the job ID, an optional idempotency token, and various parameters
+    ///   that can be used to customize the job execution, such as `jar_params`, `notebook_params`,
+    ///   `python_params`, and others.
+    ///
+    /// Returns:
+    /// - A `Result<JobRunResponse, HttpError>`: On success, returns a `JobRunResponse` struct
+    ///   containing details about the triggered job run, including the `run_id`. On failure,
+    ///   returns an `HttpError` indicating what went wrong during the request.
+    ///
+    /// Example:
+    /// ```no_run
+    /// use tokio::runtime::Runtime;
+    ///
+    /// async fn example_execute_job_run() {
+    ///     let rt = Runtime::new().unwrap();
+    ///
+    ///     rt.block_on(async {
+    ///         let config = Config::new().unwrap();
+    ///         let session = DatabricksSession::new(config).unwrap();
+    ///
+    ///         let request_body = JobRunRequest {
+    ///             job_id: YOUR_JOB_ID_HERE, // Replace YOUR_JOB_ID_HERE with the actual job ID
+    ///             idempotency_token: None, // Optional: Provide a token for idempotent requests
+    ///             // Other fields can be specified as needed
+    ///             ..Default::default() // Use default values for unspecified fields
+    ///         };
+    ///
+    ///         match session.execute_job_run(request_body).await {
+    ///             Ok(response) => println!("Job Run ID: {}", response.run_id),
+    ///             Err(e) => eprintln!("Failed to execute job run: {:?}", e),
+    ///         }
+    ///     });
+    /// }
+    /// ```
+    ///
+    /// Note: This function requires an async runtime to be executed, such as Tokio's runtime
+    /// shown in the example. It is designed to be called within an async context or block.
+    pub async fn execute_job_run(
+        &self,
+        request_body: JobRunRequest,
+    ) -> Result<JobRunResponse, HttpError> {
+        self.send_databricks_request(Method::POST, "api/2.1/jobs/run-now", Some(request_body))
+            .await
     }
 }

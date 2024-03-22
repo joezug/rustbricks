@@ -1,17 +1,19 @@
 pub mod config;
 
 pub mod models {
-    pub mod cluster_info;
-    pub mod sql_statement;
+    mod cluster_info;
+    mod job_run_info;
+    mod sql_statement;
 
     pub use cluster_info::ClusterInfo;
+    pub use job_run_info::{JobRunRequest, JobRunResponse, QueueSettings};
     pub use sql_statement::{
         ChunkMetadata, ResultData, SqlParameter, SqlStatementRequest, SqlStatementResponse,
     };
 }
 
 pub mod services {
-    pub mod databricks_session;
+    mod databricks_session;
 
     pub use databricks_session::DatabricksSession;
 }
